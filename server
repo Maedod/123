@@ -1,4 +1,5 @@
 
+
 server <- function(input, output, session) {
   
   con <- dbConnect(
@@ -507,103 +508,18 @@ server <- function(input, output, session) {
       closeOnClickOutside = TRUE
     )
   }
-  # ui att page----
-  output$uiAttr <- renderUI(
-    if (ho$pg == 6) {
-      div(
-        style = 'padding:10vh 10% 0 10%;',
-        align = 'center',
-        fluidRow(
-          lapply(
-            1:6,
-            function(i) {
-              column(
-                width = 2,
-                h3(
-                  style = 'color:white;',
-                  switch(
-                    i,
-                    'Miami South Beach',
-                    'Everglades National Park',
-                    'Frost Science Museum',
-                    'Miami-Dade Arena',
-                    'Club E11EVEN MIAMI',
-                    'Miami Jet Ski Rentals'
-                  )
-                ),
-                img(
-                  src = paste0('attraction', i, '.jpg'),
-                  width = '100%',
-                  style = 'border:solid white 10px;'
-                ),
-                br(),
-                br(),
-                
-              )
-            }
-          )
-        ),
-        uiOutput('uiResTbl'),
-        pickerInput(
-          inputId = "attInput",
-          label = tags$span(style = "color: red;", "Attraction"), 
-          choices = c("Miami Beach", "Everglades National Park", "Frost Science Museum", "Miami-Dade Arena",'Club E11EVEN MIAMI','Miami Beach  Jet Ski Rentals'),
-          selected = "Miami Beach",
-        ),
-        
-        dateInput(
-          inputId = 'dtInput',
-          label = tags$span(style = "color: red;", "Date"),
-          value = Sys.Date(),
-        ),
-        pickerInput(
-          inputId = "numPeopleInput",
-          label = tags$span(style = "color: red;", "Number of People"), 
-          choices = c("1", "2", "3", "4","5","6"),
-          selected = "1",
-        ),
-        actionButton(
-          inputId = "submitRes",
-          label = "Submit Reservation",
-          style = "simple",
-          color = "primary",
-          size = "md"
-        )
-      )
-    }
-  )
-  
-  
-  observeEvent(
-    input$submitRes,
-    {
-      sendSweetAlert(
-        session = session,
-        title = 'Confirmed!',
-        text = paste0(
-          'Your reservation for ',
-          input$numPeopleInput, 
-          ' on ',
-          input$dtInput,
-          ' ',
-          input$tmInput,
-          ' at ',
-          input$attInput,
-          ' is confirmed. See you soon!'
-        ),
-        type = 'success'
-      )
-      di$re <- 0
-    }
-  )
-  
   # ui for booking
   output$uiBooking <- renderUI({
     if (ho$pg == 8) {
       # Get the accommodation data from the database
       accommodation_data <- dbGetQuery(con, "SELECT room_type, bed_type, price_pn FROM accommodation")
-      
       fluidPage(
+        fluidRow(
+          column(
+            width = 12,
+            dataTableOutput("booking_table")
+          )
+        ),
         fluidRow(
           column(
             width = 6,
@@ -671,6 +587,7 @@ server <- function(input, output, session) {
     }
   })
   
+  
   # booking
   observeEvent(input$submit_booking, {
     # Get the input values
@@ -680,7 +597,7 @@ server <- function(input, output, session) {
     check_out <- input$check_out
     
     # Retrieve the updated accommodation data from the database
-    accommodation_data <- dbGetQuery(con, "SELECT room_type,bed_type,price_pn FROM accomodation")
+    accommodation_data <- dbGetQuery(con, "SELECT room_type,bed_type,price_pn FROM accommodation")
     
     # Render a table with the accommodation data
     output$booking_table <- renderTable({
@@ -694,5 +611,6 @@ server <- function(input, output, session) {
         'Thank you for your booking!'
       )
     )
+    print("Booking submitted!") # Add this line
   })
 }
