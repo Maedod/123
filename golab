@@ -1,0 +1,93 @@
+# the necessary packages
+library(leaflet)
+library(shiny)
+library(shinyalert)
+library(shinythemes)
+library(shinyWidgets)
+library(tidyverse)
+
+# input id's of tabs
+ti <- c(
+  'home', 
+  'loca', 
+  'acco', 
+  'dini', 
+  'amen', 
+  'attr', 
+  'abou',
+  'book'
+)
+
+# labels of tabs
+tl <- c(
+  'Home', 
+  'Location', 
+  'Accommodations', 
+  'Dining', 
+  'Amenities', 
+  'Attractions', 
+  'About Us',
+  'Booking'
+)
+
+# the coordinates of the hotel location
+hlat <- 25.758833
+hlng <- -80.192479
+
+# team members----
+mem <- c(
+  'Yunqiao Guo',
+  'Michelle He',
+  'Yu Jia',
+  'Bangjie Liu',
+  'Jiawen Song',
+  'Alex Zheng'
+)
+
+# member bios----
+bio <- c(
+  paste0(
+    'Hello! I am Yunqiao, pursueing my master  ',
+    'program in Columbia University, majoring in  ',
+    'Applied Analytics. I love skiing, and had a 5 year ',
+    'experience of professional ski training in Switzerland.'
+  ),
+  paste0(
+    'Hello! I’m Michelle He and I’m in the Applied  ',
+    'Analytics program at Columbia University. I enjoy  ',
+    'painting and spending my time with animals.'
+  ),
+  paste0(
+    'Yu Jia is a first-year master student pursuing ',
+    'applied analytics at Columbia University. Her  ',
+    'hobbies include hiking and skating.  '
+  ),
+  paste0(
+    'Bangjie Liu, who also goes by Ben, is a Columbia ',
+    'University student majoring in Applied Analytics. ',
+    'He spends most of his free time riding, ',
+    'skateboarding, and car racing.'
+  ),
+  paste0(
+    'My name is Jiawen Song. I received a  ',
+    'Mathematics degree from Miami University for  ',
+    'my undergraduate studies. I am pursuing a  ',
+    "Masters'degree in Applied Analytics at ",
+    'Columbia University.'
+  ),
+  paste0(
+    'This is Alex Zheng, I majored in Appiled Analytics ',
+    'at Columbia University. I am pursuing a career in ',
+    'finance field and I am interested in stock market, ',
+    'pets and e-sports.'
+  )
+)
+
+# bts videos----
+vids <- c(
+  'CuklIb9d3fI',
+  'WMweEpGlu_U',
+  'gdZLi9oWNZg',
+  'XsX3ATc3FbA',
+  'kTlv5_Bs8aw'
+)
