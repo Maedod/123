@@ -1,0 +1,698 @@
+
+server <- function(input, output, session) {
+  
+  con <- dbConnect(
+    drv = dbDriver('Postgres'),
+    dbname = 'hotel23a_06',
+    host = 'db-postgresql-nyc1-44203-do-user-8018943-0.b.db.ondigitalocean.com',
+    port = 25061,
+    user = 'proj23a_06',
+    password = 'AVNS_Ufz0tab6d2J7Her7QYD'
+  )
+  
+  # reactive values----
+  ho <- reactiveValues(
+    pg = 1, # the selected webpage number
+    hm = 1  # the selected image on the home page
+  )
+  
+  tm <- reactiveValues(
+    yt = 0, # hide/show youtube video
+    vi = 0  # selected video index
+  )
+  
+  di <- reactiveValues(
+    re = 0  # the restaurant selected for reservation
+  )
+  
+  # wallpaper----
+  output$wallppr <- renderUI(
+    if (ho$pg == 1) {
+      setBackgroundImage(
+        paste0('hotel1_', ho$hm, '.jpg')
+      )
+    } else if (ho$pg >= 2) {
+      setBackgroundImage(paste0('hotel', ho$pg, '.jpg'))
+    }
+  )
+  
+  # ui tabs----
+  output$uiTabs <- renderUI(
+    div(
+      style = 'padding:10px 0 0 0;',
+      align = 'center',
+      lapply(
+        1:8,
+        function(i) {
+          tabBttn(i)
+        }
+      ),
+      hr(style = 'border: single white 3px;')
+    )
+  )
+  
+  # function to change look of tab when selected
+  tabBttn <- function(i) {
+    t <- actionBttn(
+      inputId = ti[i],
+      label = tl[i],
+      style = ifelse(ho$pg == i, 'simple', 'stretch'),
+      color = ifelse(ho$pg == i, 'default', 'default'),
+      size = 'sm'
+    )
+    return(t)
+  }
+  
+  # _event tab buttons----
+  observeEvent(eventExpr = input$home, {ho$pg <- 1})
+  observeEvent(eventExpr = input$loca, {ho$pg <- 2})
+  observeEvent(eventExpr = input$acco, {ho$pg <- 3})
+  observeEvent(eventExpr = input$dini, {ho$pg <- 4})
+  observeEvent(eventExpr = input$amen, {ho$pg <- 5})
+  observeEvent(eventExpr = input$attr, {ho$pg <- 6})
+  observeEvent(eventExpr = input$abou, {ho$pg <- 7})
+  observeEvent(eventExpr = input$book, {ho$pg <- 8})
+  
+  # ui home page----
+  output$uiHome <- renderUI({
+    if (ho$pg == 1) {
+      div(
+        class = "video-container",
+        tags$iframe(
+          src = "https://www.bilibili.com/video/BV1LW411j7K1/?spm_id_from=333.337.search-card.all.click&vd_source=24ed6522651ccc160b99a141ae7a5f24", 
+          frameborder = "0", 
+          allowfullscreen = TRUE, 
+          scheme = "https",
+          width = "60%",
+          height = "600px"
+        ),
+        div(
+          class = "content",
+          div(
+            align = 'left',
+            style = 'padding:40vh 0 0 5%;',
+            img(
+              src = 'cu.png',
+              width = '100px'
+            ),
+            h1(
+              style = 'color:white;',
+              'JW Marriott Columbia Miami'
+            ),
+            h3(
+              style = 'color:white; padding:0; margin:0;',
+              "Explore the City's Rich History and Cultural Landmarks"
+            )
+          ),
+          div(
+            align = 'center',
+            style = 'padding:20vh 0 10px 0;',
+            actionBttn(
+              inputId = 'home1',
+              label = '<',
+              style = 'jelly',
+              color = 'default',
+              size = 'sm'
+            ),
+            actionBttn(
+              inputId = 'home2',
+              label = '>',
+              style = 'jelly',
+              color = 'default',
+              size = 'sm'
+            )
+          )
+        ),
+        tags$style(
+          HTML("
+          .video-container {
+            width: 100%;
+            float: left;
+            margin-right: 10px;
+          }
+          .content {
+            width: 35%;
+            float: right;
+          }
+        ")
+        )
+      )
+    }
+  })
+  
+  # _event home slide buttons----
+  observeEvent(eventExpr = input$home1, {ho$hm <- switch(ho$hm, 3, 1, 2)})
+  observeEvent(eventExpr = input$home2, {ho$hm <- switch(ho$hm, 2, 3, 1)})
+  
+  # ui loca page----
+  output$uiLoca <- renderUI(
+    if (ho$pg == 2) {
+      fluidRow(
+        column(
+          width = 6,
+          style = 'padding:30vh 10% 0 10%;',
+          h3(
+            style = 'color:white;',
+            paste0(
+              'Our hotel is located in the heart of South Beach,',
+              'just steps away from the crystal-clear waters of ',
+              'the Atlantic Ocean and the world-renowned ',
+              'Miami Beach boardwalk. Whether you are here',
+              'for a leisurely vacation or a business trip, Miami',
+              'has something for everyone.'
+            )
+          )
+        ),
+        column(
+          width = 6,
+          style = 'padding:0 25px 0 0;',
+          wellPanel(
+            leafletOutput(
+              outputId = 'hotMap',
+              height = '80vh'
+            )
+          )
+        )
+      )
+    }
+  )
+  
+  # _hotel map----
+  output$hotMap <- renderLeaflet(
+    {
+      leaflet() %>% 
+        addTiles() %>% 
+        addMarkers(
+          lat = hlat,
+          lng = hlng
+        ) %>% 
+        setView(
+          lat = hlat,
+          lng = hlng,
+          zoom = 15
+        )
+    }
+  )
+  
+  # ui acco page----
+  output$uiAcco <- renderUI(
+    if (ho$pg == 3) {
+      fluidRow(
+        column(
+          width = 6,
+          style = 'padding:10vh 10% 0 10%;',
+          h3(
+            style = 'color:white;',
+            paste0(
+              'Dive into our pristine swimming pool, featuring ',
+              'thrilling water slides connecting to our water ',
+              'park. Rejuvenate your senses at our lavish SPA,',
+              "offering a variety of indulgent treatments.Don't",
+              'miss our Skydeck, showcasing mesmerizing',
+              "views of Miami's skyline and the ocean. ",
+              'Experience exceptional service and world-class ',
+              'amenities at JW Marriott Miami Hotel.'
+            )
+          )
+        )
+      )
+    }
+  )
+  
+  # ui dini page----
+  output$uiDini <- renderUI(
+    if (ho$pg == 4) {
+      div(
+        style = 'padding:10vh 10% 0 10%;',
+        align = 'center',
+        fluidRow(
+          lapply(
+            1:6,
+            function(i) {
+              column(
+                width = 2,
+                h3(
+                  style = 'color:white;',
+                  switch(
+                    i,
+                    'Oriental Pearl',
+                    'La Casa del Sol',
+                    'Sushi by M',
+                    'La plage du roi',
+                    'Hotel Restaurant',
+                    'Roof top'
+                  )
+                ),
+                img(
+                  src = paste0('rest', i, '.jpg'),
+                  width = '100%',
+                  style = 'border:solid white 10px;'
+                ),
+                br(),
+                br(),
+                actionBttn(
+                  inputId = paste0('resTbl', i),
+                  label = 'Reserve',
+                  style = 'simple',
+                  color = 'primary',
+                  size = 'md'
+                ),
+                br(),
+                br()
+              )
+            }
+          )
+        ),
+        uiOutput('uiResTbl')
+      )
+    }
+  )
+  
+  # event reserve table----
+  observeEvent(input$resTbl1, {di$re <- 1})
+  observeEvent(input$resTbl2, {di$re <- 2})
+  observeEvent(input$resTbl3, {di$re <- 3})
+  observeEvent(input$resTbl4, {di$re <- 4})
+  observeEvent(input$resTbl5, {di$re <- 5})
+  observeEvent(input$resTbl6, {di$re <- 6})
+  
+  # ui restbl----
+  output$uiResTbl <- renderUI(
+    if (di$re > 0) {
+      div(
+        style = 'padding:0 25% 0 25%;',
+        wellPanel(
+          style = 'background-color:rgba(200,200,200,0.75);',
+          h3(
+            paste0(
+              'Reserve a Table @ ',
+              switch(
+                di$re,
+                'Oriental Pearl',
+                'La Casa del Sol',
+                'Sushi by M',
+                'La plage du roi',
+                'Hotel Restaurant',
+                'Roof top Columbia'
+              )
+            )
+          ),
+          hr(),
+          fluidRow(
+            column(
+              width = 4,
+              img(
+                src = 'icon_date.png',
+                width = '25%'
+              ),
+              br(),
+              br(),
+              dateInput(
+                inputId = 'dtInput',
+                label = NULL,
+                value = Sys.Date(),
+                min = Sys.Date()
+              )
+            ),
+            column(
+              width = 4,
+              img(
+                src = 'icon_time.png',
+                width = '25%'
+              ),
+              br(),
+              br(),
+              pickerInput(
+                inputId = 'tmInput',
+                label = NULL,
+                choices = c(paste0(12:23, ':00')),
+                selected = '12:00'
+              )
+            ),
+            column(
+              width = 4,
+              img(
+                src = 'icon_pers.png',
+                width = '25%'
+              ),
+              br(),
+              br(),
+              radioGroupButtons(
+                inputId = 'ppInput',
+                label = NULL,
+                choices = c(1:4),
+                selected = 2
+              )
+            )
+          ),
+          hr(),
+          actionBttn(
+            inputId = 'submitRes',
+            label = 'Submit',
+            style = 'gradient',
+            color = 'royal',
+            size = 'lg'
+          )
+        )
+      )
+    }
+  )
+  
+  # event submit reservation----
+  observeEvent(
+    input$submitRes,
+    {
+      sendSweetAlert(
+        session = session,
+        title = 'Confirmed!',
+        text = paste0(
+          'Your table for ',
+          input$ppInput, 
+          ' on ',
+          input$dtInput,
+          ' ',
+          input$tmInput,
+          ' at ',
+          switch(
+            di$re,
+            'Oriental Pearl',
+            'La Casa del Sol',
+            'Sushi by M',
+            'La plage du roi',
+            'Hotel Restaurant',
+            'Roof top Columbia'
+          ),
+          ' is confirmed. See you soon!'
+        ),
+        type = 'success'
+      )
+      di$re <- 0
+    }
+  )
+  
+  # ui amen page----
+  output$uiAmen <- renderUI(
+    if (ho$pg == 5) {
+      fluidRow(
+        column(
+          width = 6,
+          style = 'padding:10vh 10% 0 10%;',
+          h3(
+            style = 'color:white;',
+            paste0(
+              'Dive into our pristine swimming pool, featuring ',
+              'thrilling water slides connecting to our water ',
+              'park. Rejuvenate your senses at our lavish SPA,',
+              "offering a variety of indulgent treatments.Don't",
+              'miss our Skydeck, showcasing mesmerizing',
+              "views of Miami's skyline and the ocean. ",
+              'Experience exceptional service and world-class ',
+              'amenities at JW Marriott Miami Hotel.'
+            )
+          )
+        )
+      )
+    }
+  )
+  
+  # ui attr page----
+  
+  # ui abou page----
+  output$uiAbou <- renderUI(
+    if (ho$pg == 7) {
+      div(
+        style = 'padding:15vh 2% 0 2%;',
+        fluidRow(
+          column(
+            width = 9,
+            if (tm$yt == 1) {
+              div( 
+                align = 'right',
+                # embedded youtube video
+                tags$iframe(
+                  style = 'border:4px solid white; border-radius:10px;',
+                  height = '500px',
+                  width = '90%',
+                  src = paste0(
+                    'https://www.youtube.com/embed/', 
+                    vids[tm$vi],
+                    '?rel=0'),
+                  allow = 'fullscreen;'
+                )
+              )
+            } else {
+              div(br())
+            }
+          ),
+          column(
+            width = 3,
+            align = 'right',
+            actionBttn(
+              inputId = 'teamTitle',
+              label = 'Our Team',
+              style = 'bordered',
+              color = 'default',
+              size = 'lg',
+              block = TRUE
+            ),
+            lapply(
+              1:6, 
+              function(i) {
+                div(
+                  actionBttn(
+                    inputId = paste0('mem', i),
+                    label = mem[i],
+                    style = 'minimal',
+                    color = 'default',
+                    size = 'lg',
+                    block = TRUE
+                  )
+                )
+              }
+            )
+          )
+        )
+      )
+    }
+  )
+  
+  # _event team title bttn----
+  observeEvent(
+    input$teamTitle,
+    {
+      tm$yt <- 1
+      tm$vi <- sample(1:6, 1)
+    }
+  )
+  
+  # _events mem bttns----
+  observeEvent(input$mem1, {memInfo(1)})
+  observeEvent(input$mem2, {memInfo(2)})
+  observeEvent(input$mem3, {memInfo(3)})
+  observeEvent(input$mem4, {memInfo(4)})
+  observeEvent(input$mem5, {memInfo(5)})
+  observeEvent(input$mem6, {memInfo(6)})
+  
+  memInfo <- function(i) {
+    shinyalert(
+      title = mem[i],
+      text = paste0(
+        '<style>.myDiv {text-align:left;}</style>',
+        '<style>.myImg {border:solid lightblue 10px; border-radius:10%;}</style>',
+        '<img class = "myImg" src = "member', i, '.jpeg" width = "200px"><br><br>',
+        '<div class = "myDiv"><p>', bio[i], '</p></div>'
+      ),
+      showConfirmButton = FALSE,
+      html = TRUE,
+      closeOnClickOutside = TRUE
+    )
+  }
+  # ui att page----
+  output$uiAttr <- renderUI(
+    if (ho$pg == 6) {
+      div(
+        style = 'padding:10vh 10% 0 10%;',
+        align = 'center',
+        fluidRow(
+          lapply(
+            1:6,
+            function(i) {
+              column(
+                width = 2,
+                h3(
+                  style = 'color:white;',
+                  switch(
+                    i,
+                    'Miami South Beach',
+                    'Everglades National Park',
+                    'Frost Science Museum',
+                    'Miami-Dade Arena',
+                    'Club E11EVEN MIAMI',
+                    'Miami Jet Ski Rentals'
+                  )
+                ),
+                img(
+                  src = paste0('attraction', i, '.jpg'),
+                  width = '100%',
+                  style = 'border:solid white 10px;'
+                ),
+                br(),
+                br(),
+                
+              )
+            }
+          )
+        ),
+        uiOutput('uiResTbl'),
+        pickerInput(
+          inputId = "attInput",
+          label = tags$span(style = "color: red;", "Attraction"), 
+          choices = c("Miami Beach", "Everglades National Park", "Frost Science Museum", "Miami-Dade Arena",'Club E11EVEN MIAMI','Miami Beach  Jet Ski Rentals'),
+          selected = "Miami Beach",
+        ),
+        
+        dateInput(
+          inputId = 'dtInput',
+          label = tags$span(style = "color: red;", "Date"),
+          value = Sys.Date(),
+        ),
+        pickerInput(
+          inputId = "numPeopleInput",
+          label = tags$span(style = "color: red;", "Number of People"), 
+          choices = c("1", "2", "3", "4","5","6"),
+          selected = "1",
+        ),
+        actionButton(
+          inputId = "submitRes",
+          label = "Submit Reservation",
+          style = "simple",
+          color = "primary",
+          size = "md"
+        )
+      )
+    }
+  )
+  
+  
+  observeEvent(
+    input$submitRes,
+    {
+      sendSweetAlert(
+        session = session,
+        title = 'Confirmed!',
+        text = paste0(
+          'Your reservation for ',
+          input$numPeopleInput, 
+          ' on ',
+          input$dtInput,
+          ' ',
+          input$tmInput,
+          ' at ',
+          input$attInput,
+          ' is confirmed. See you soon!'
+        ),
+        type = 'success'
+      )
+      di$re <- 0
+    }
+  )
+  
+  # ui for booking
+  output$uiBooking <- renderUI({
+    if (ho$pg == 8) {
+      # Get the accommodation data from the database
+      accommodation_data <- dbGetQuery(con, "SELECT room_type, bed_type, price_pn FROM accommodation")
+      
+      fluidPage(
+        fluidRow(
+          column(
+            width = 6,
+            style = 'padding:10vh 10% 0 10%;',
+            h3(
+              style = 'color:white;',
+              'Make a booking'
+            ),
+            br(),
+            tags$form(
+              action = '/submit_booking',
+              method = 'post',
+              div(
+                class = 'form-group',
+                selectInput(
+                  inputId = 'room_type',
+                  label = 'Room type',
+                  choices = accommodation_data$room_type,
+                  selected = NULL
+                )
+              ),
+              div(
+                class = 'form-group',
+                selectInput(
+                  inputId = 'bed_type',
+                  label = 'Bed type',
+                  choices = accommodation_data$bed_type,
+                  selected = NULL
+                )
+              ),
+              div(
+                class = 'form-group',
+                textInput(
+                  inputId = 'check_in',
+                  label = 'Check-in date',
+                  value = NULL
+                )
+              ),
+              div(
+                class = 'form-group',
+                textInput(
+                  inputId = 'check_out',
+                  label = 'Check-out date',
+                  value = NULL
+                )
+              ),
+              div(
+                class = 'form-group',
+                submitButton('Book now')
+              )
+            )
+          ),
+          column(
+            width = 6,
+            style = 'padding:10vh 10% 0 10%;',
+            h3(
+              style = 'color:white;',
+              'Current Bookings'
+            ),
+            br(),
+            tableOutput('booking_table')
+          )
+        )
+      )
+    }
+  })
+  
+  # booking
+  observeEvent(input$submit_booking, {
+    # Get the input values
+    room_type <- input$room_type
+    bed_type <- input$bed_type
+    check_in <- input$check_in
+    check_out <- input$check_out
+    
+    # Retrieve the updated accommodation data from the database
+    accommodation_data <- dbGetQuery(con, "SELECT room_type,bed_type,price_pn FROM accomodation")
+    
+    # Render a table with the accommodation data
+    output$booking_table <- renderTable({
+      accommodation_data
+    })
+    
+    # Display a message to confirm the booking
+    showModal(
+      modalDialog(
+        title = 'Booking confirmed',
+        'Thank you for your booking!'
+      )
+    )
+  })
+}
